@@ -95,7 +95,7 @@ func BulkIndex(docs []string, options Options) error {
 			continue
 		}
 
-		header := fmt.Sprintf(`{"index": {"_index": "%s", "_type": "%s"}}`, options.Index, options.DocType)
+		header := fmt.Sprintf(`{"index": {"_index": "%s"}}`, options.Index)
 
 		// If an "-id" is given, peek into the document to extract the ID and
 		// use it in the header.
@@ -257,7 +257,7 @@ func PutMapping(options Options, body io.Reader) error {
 
 	rand.Seed(time.Now().Unix())
 	server := options.Servers[rand.Intn(len(options.Servers))]
-	link := fmt.Sprintf("%s/%s/_mapping/%s", server, options.Index, options.DocType)
+	link := fmt.Sprintf("%s/%s/_mapping", server, options.Index)
 
 	if options.Verbose {
 		log.Printf("applying mapping: %s", link)
