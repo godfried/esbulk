@@ -201,13 +201,15 @@ func BulkIndex(docs []string, options Options) error {
 		return err
 	}
 	if br.HasErrors {
-		if options.Verbose {
-			log.Println("error details: ")
-			for _, v := range br.Items {
-				log.Printf("  %q\n", v.IndexAction.Error)
+		log.Println("error details: ")
+		for _, v := range br.Items {
+			if v.IndexAction.Error.Reason != "" {
+				log.Printf("  %q\n", v.IndexAction.Error.Reason)
 			}
 		}
-		log.Printf("request body: %s", body)
+		if body != "" {
+			log.Printf("request body: %s", body)
+		}
 		return fmt.Errorf("error during bulk operation, check error details; maybe try fewer workers (-w) or increase thread_pool.bulk.queue_size in your nodes")
 	}
 	return nil
