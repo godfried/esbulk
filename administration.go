@@ -1,11 +1,15 @@
 package esbulk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	elasticsearchv7 "github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/sethgrid/pester"
 )
 
@@ -78,4 +82,39 @@ func GetSettings(idx int, options Options) (map[string]interface{}, error) {
 	// }
 
 	return doc, nil
+}
+
+type CatShards struct {
+	Shard            string `json:"shard"`
+	PrimaryOrReplica string `json:"prirep"`
+	IP               string `json:"ip"`
+	ID               string `json:"id"`
+	Node             string `json:"node"`
+}
+
+func ShardInfo(index string) []CatShards {
+	client, err := elasticsearchv7.NewDefaultClient()
+	if err != nil {
+		panic(err)
+	}
+	r := esapi.CatShardsRequest{
+		Index:  []string{index},
+		Format: "json",
+		H:      []string{"shard", "prirep", "ip", "id", "node"},
+	}
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	resp, err := r.Do(ctx, client.Transport)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	result := make([]CatShards, 0, 10)
+	d := json.NewDecoder(resp.Body)
+	err = d.Decode(&result)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
